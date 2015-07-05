@@ -1,4 +1,4 @@
-module Chess where
+module Knight where
 import System.Random
 
 type Pos = (Int, Int)

@@ -6,7 +6,7 @@ import           Snap.Core
 import           Snap.Util.FileServe
 import           Snap.Http.Server
 import           Data.String (fromString)
-import           Chess
+import           Knight
 import           Control.Monad.IO.Class
 
 main :: IO ()
