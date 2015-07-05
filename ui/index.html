@@ -1,0 +1,128 @@
+<html>
+  <head>
+    <title></title>
+    <meta content="">
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+    <style type="text/css">
+    .container { margin: 15px; padding: 0; border: 0;}
+    .cell {
+      width: 64px;
+      padding: 10px;
+      height:  64px;
+      border: 1px solid black;
+      color: red;
+      text-align: center;
+      font-size: 32pt;
+    }
+    .row { margin: 0 }
+    .next, .glyphicon-knight { color: green; }
+    .black { background-color: #333; }
+    .glyphicon-pawn { cursor: pointer; }
+    #result {
+      display: none;
+      padding: 6px 12px 8px 12px;
+    }
+    </style>
+  </head>
+  <body>
+  <div class="container">
+    <div>
+      <button id="reset" class="btn btn-primary">Reset</button>
+      <button id="new" class="btn btn-primary">New board</button>
+      <span id="result" class="alert"></span>
+    </div>
+    <hr/>
+    <div class="board"></div>
+  </div>
+
+
+  <script src="js/jquery.min.js"></script>
+  <script>
+  $(function() {
+
+    function posEq(x,y) { return x[0] == y[0] && x[1] == y[1]; }
+    function isValid(x, y) {
+      var dx = Math.abs(x[0] - y[0]);
+      var dy = Math.abs(x[1] - y[1]);
+      return (dx + dy) == 3 && Math.abs(dx - dy) == 1;
+    }
+    function getPos(e) { return [e.attr('x'), e.attr('y')]; }
+
+
+    function update() {
+      var knight = getPos($('.glyphicon-knight').parent());
+
+      $('.glyphicon-pawn').each(function() {
+        var p = $(this).parent().removeClass('next');
+        var pos = getPos(p);
+        if (isValid(knight, pos)) p.addClass('next');
+      });
+
+      if (!$('.next').length) {
+        var r = $('#result').removeClass('alert-success alert-danger').show();
+
+        if ($('.glyphicon-pawn').length) {
+          r.addClass('alert-danger').text('You loose');
+        } else {
+          r.addClass('alert-success').text('You win');
+        }
+      }
+    }
+
+    function click(pawn) {
+      var knight = $('.glyphicon-knight');
+      var parent = pawn.parent();
+      if (!parent.is('.next')) return;
+      knight.remove();
+      pawn.removeClass('glyphicon-pawn').addClass('glyphicon-knight');
+      parent.removeClass('next');
+      update();
+    }
+
+    function load(knight, pawns) {
+      $('#result').hide();
+      var board = $('.board').empty();
+      for (var i = 1; i <= 8; ++i) {
+        var row = $('<div class="row"></div>');
+        for (var j = 1; j <= 8; ++j) {
+          var css = i%2 == j%2 ? 'white' : 'black';
+          var pos = [i,j];
+          var content = '';
+          if (posEq(knight, pos)) {
+            content = '<span class="glyphicon glyphicon-knight"></span>';
+          } else if ($.grep(pawns, function(i) { return posEq(i, pos); }).length) {
+            content = '<span class="glyphicon glyphicon-pawn"></span>';
+          }
+          row.append($('<div class="col-xs-1 cell '+css+'">'+content+'</div>')
+            .attr("x", i).attr("y", j)
+          );
+        }
+        board.append(row);
+      }
+
+      $('.glyphicon-pawn').click(function() { click($(this)); });
+
+      update();
+    }
+
+    var list;
+    function loadList(l) {
+      list = l;
+      load(l[0], l.slice(1));
+    }
+    function newBoard() {
+      $.getJSON('/api/board', loadList);
+    }
+    function resetBoard() {
+      if (list) return loadList(list);
+      newBoard();
+    }
+    $('#new').click(newBoard);
+    $('#reset').click(resetBoard);
+
+    newBoard();
+
+  });
+  </script>
+  </body>
+</html>
