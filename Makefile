@@ -7,6 +7,6 @@ run: $(SNAP)
 
 
 $(SNAP): $(SRC) api/snap.cabal
-	(cd api; cabal build;)
+	(cd api; cabal configure; cabal build;)
 
 
