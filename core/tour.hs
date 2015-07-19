@@ -1,40 +1,48 @@
-import Knight
+import Knight (Pos,validNextPositionsFor,isValidFor)
+import Tree
+import Data.List
+import Data.Ord
 
--- Tree stuff
-data Tree a = Tree a [Tree a]
-  deriving Show
-
-mapTree :: (a -> b) -> Tree a -> [b]
-mapTree fn (Tree a xs) = (fn a):(concat $ fmap (mapTree fn) xs)
-
-mapTreeWithDepth :: (Int -> a -> b) -> Int -> Tree a -> [b]
-mapTreeWithDepth fn depth (Tree a xs) = (fn depth a):(concat $ fmap (mapTreeWithDepth fn (depth+1)) xs)
-
-mapTreePath :: ([a] -> b) -> [a]-> Tree a -> [b]
-mapTreePath fn path (Tree a []) = [fn $ a:path]
-mapTreePath fn path (Tree a xs) = concat $ fmap (mapTreePath fn (a:path)) xs
-
-firstToDepth :: Int -> Tree a -> Maybe [a]
-firstToDepth depth step = case pathsOfMatchingDepth of
-    [] -> Nothing
-    x:xs -> Just x
-  where paths = mapTreePath id [] step
-        pathsOfMatchingDepth = filter ((depth<=) . length) paths
+-- Data.List (?)
+sortOn :: Ord b => (a -> b) -> [a] -> [a]
+sortOn f = map snd . sortBy (comparing fst)
+                   . map (\x -> let y = f x in y `seq` (y, x))
 
 -- Build Tour
-nextStep :: [Pos] -> Pos -> Tree Pos
-nextStep list p = Tree p steps
-  where steps = fmap (nextStep $ p:list) (filter (flip notElem list) (validNextPositions p))
+nextUniquePositions :: (Pos -> Bool) -> [Pos] -> Pos -> [Pos]
+nextUniquePositions isValid path p = filter (flip notElem path) validPositions
+  where validPositions = validNextPositionsFor isValid p
+
+-- Build Tour: Brute force
+bruteForce = nextUniquePositions
+
+-- Build Tour: Warnsdorf
+warnsdorf :: (Pos -> Bool) -> [Pos] -> Pos -> [Pos]
+warnsdorf isValid path p = sortOn (length . getNext) next
+  where getNext = validNextPositionsFor isValid
+        next = nextUniquePositions isValid path p
+
+-- Filter Tour
+withLength :: [Pos] -> (Int, [Pos])
+withLength l = (length l,l)
+
+firstDepthIO :: Int -> Int -> [(Int,[Pos])] -> IO [(Int,[Pos])]
+firstDepthIO _ _ [] = return []
+firstDepthIO i depth (x:xs) = do
+  putStrLn $ show i
+  if fst x >= depth
+  then putStrLn "FOUND" >> return [x]
+  else firstDepthIO (i+1) depth xs
 
 -- Show Tour
 showNode :: Show a => Int -> a -> IO ()
 showNode depth val = putStrLn $ (replicate depth ' ') ++ (show val)
 
---main = do
---  let t = nextStep [] (1,1)
---  sequence $ take 200 $ mapTreeWithDepth showNode 0 t
-
 main = do
-  let path = firstToDepth 57 $ nextStep [] (1,1)
-  putStrLn $ maybe "No match" show path
-  putStrLn $ maybe "No match" (show . length) path
+  let strategy = warnsdorf
+  let tree = buildTree (strategy (isValidFor 8 8)) [] (1,5)
+  let paths = mapTreePath withLength [] tree
+  filteredPaths <- firstDepthIO 0 64 paths
+  let match = head filteredPaths
+  putStrLn $ show $ fst match
+  putStrLn $ show $ snd match

@@ -9,11 +9,14 @@ delta = [ ((-2), (-1)), ((-2), 1), (2, (-1)), (2, 1), ((-1), (-2)), ((-1), 2), (
 addPos :: Pos -> Pos -> Pos
 addPos (x1, y1) (x2, y2) = (x1+x2, y1+y2)
 
-isValid :: Pos -> Bool
-isValid (x,y) = x >= 1 && x <= 8 && y >= 1 && y <= 8
+isValidFor :: Int -> Int -> Pos -> Bool
+isValidFor mx my (x,y) = x >= 1 && x <= mx && y >= 1 && y <= my
+
+validNextPositionsFor :: (Pos -> Bool) -> Pos -> [Pos]
+validNextPositionsFor fn = filter fn . flip map delta . addPos
 
 validNextPositions :: Pos -> [Pos]
-validNextPositions = filter isValid . flip map delta . addPos
+validNextPositions = validNextPositionsFor $ isValidFor 8 8
 
 uniqueNextPositions :: [Pos] -> [Pos]
 uniqueNextPositions (current:xs) = filter (flip notElem xs) (validNextPositions current)

@@ -12,10 +12,16 @@ import           Control.Monad.IO.Class
 main :: IO ()
 main = quickHttpServe site
 
+file :: MonadSnap m => String -> String -> m ()
+file filePath contentType = route [ (apiPath, handler) ]
+  where apiPath = fromString(filePath)
+        handler = serveFileAs (fromString contentType) ("../ui/"++filePath)
+
 site :: Snap ()
 site =
     route [ ("api/board", chessHandler) ]
     <|> ifTop       (serveFileAs "text/html" "../ui/index.html")
+    <|> file "tour.html" "text/html"
     <|> dir "css"   (serveDirectory "../ui/css")
     <|> dir "fonts" (serveDirectory "../ui/fonts")
     <|> dir "js"    (serveDirectory "../ui/js")
