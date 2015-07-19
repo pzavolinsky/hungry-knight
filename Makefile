@@ -19,4 +19,4 @@ test:
 	(cd core; ghc --make test;)
 
 tour:
-	(cd core; ghc --make tour;)
+	(cd core; ghc --make test-tour;)

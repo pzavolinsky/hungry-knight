@@ -1,3 +1,4 @@
+module Tour where
 import Knight (Pos,validNextPositionsFor,isValidFor)
 import Tree
 import Data.List
@@ -14,6 +15,7 @@ nextUniquePositions isValid path p = filter (flip notElem path) validPositions
   where validPositions = validNextPositionsFor isValid p
 
 -- Build Tour: Brute force
+bruteForce :: (Pos -> Bool) -> [Pos] -> Pos -> [Pos]
 bruteForce = nextUniquePositions
 
 -- Build Tour: Warnsdorf
@@ -23,26 +25,23 @@ warnsdorf isValid path p = sortOn (length . getNext) next
         next = nextUniquePositions isValid path p
 
 -- Filter Tour
-withLength :: [Pos] -> (Int, [Pos])
-withLength l = (length l,l)
-
-firstDepthIO :: Int -> Int -> [(Int,[Pos])] -> IO [(Int,[Pos])]
-firstDepthIO _ _ [] = return []
+firstDepthIO :: Int -> Int -> [[Pos]] -> IO (Maybe [Pos])
+firstDepthIO _ _ [] = return Nothing
 firstDepthIO i depth (x:xs) = do
   putStrLn $ show i
-  if fst x >= depth
-  then putStrLn "FOUND" >> return [x]
-  else firstDepthIO (i+1) depth xs
+  if length x >= depth
+    then putStrLn "FOUND" >> return (Just x)
+    else firstDepthIO (i+1) depth xs
 
--- Show Tour
-showNode :: Show a => Int -> a -> IO ()
-showNode depth val = putStrLn $ (replicate depth ' ') ++ (show val)
-
-main = do
+getTour :: Int -> Int -> Pos -> Maybe [Pos]
+getTour mx my p =
   let strategy = warnsdorf
-  let tree = buildTree (strategy (isValidFor 8 8)) [] (1,5)
-  let paths = mapTreePath withLength [] tree
-  filteredPaths <- firstDepthIO 0 64 paths
-  let match = head filteredPaths
-  putStrLn $ show $ fst match
-  putStrLn $ show $ snd match
+      tree     = buildTree (strategy (isValidFor mx my)) [] p
+  in firstToDepth (mx*my) tree
+
+getTourIO :: Pos -> IO(Maybe [Pos])
+getTourIO p = do
+  let strategy = warnsdorf
+  let tree = buildTree (strategy (isValidFor 8 8)) [] p
+  let paths = mapTreePath id [] tree
+  firstDepthIO 0 64 paths

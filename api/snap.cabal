@@ -21,9 +21,9 @@ Executable snap
     mtl                       >= 2     && < 3,
     snap-core                 >= 0.9   && < 0.10,
     snap-server               >= 0.9   && < 0.10,
-    random                    >= 0.9   && < 2.0,
-    MonadRandom               >= 0.4   && < 2.0,
-    transformers              >= 0     && < 2.0
+    random,
+    MonadRandom,
+    transformers
 
   if impl(ghc >= 6.12.0)
     ghc-options: -threaded -Wall -fwarn-tabs -funbox-strict-fields -O2

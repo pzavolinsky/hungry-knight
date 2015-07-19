@@ -1,7 +1,7 @@
 <html>
   <head>
     <title>Knight's Tour</title>
-    <meta content="">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <link href="css/bootstrap.min.css" rel="stylesheet">
     <style type="text/css">
     .container { margin: 15px; padding: 0; border: 0;}
@@ -26,17 +26,23 @@
       color: green;
     }
     .current .glyphicon-knight { color: red;}
+    #init, #path { display: none; }
+
+    body[state=init] #init { display: block; }
+    body[state=path] #path { display: block; }
+    body[state=init] .cell { cursor: pointer; }
     </style>
   </head>
-  <body>
+  <body state="init">
   <div class="container">
-    <div>
-      <input id="path">
-      <button id="load" class="btn btn-primary">Load</button>
+    <div id="init">Click on a cell to find the Knight's Tour</div>
+    <div id="path">
+      <button id="reset" class="btn btn-primary">Reset</button>
       <br/>
       <span id="current"></span>
       <button id="prev" class="btn btn-primary">Prev</button>
       <button id="next" class="btn btn-primary">Next</button>
+      <button id="play" class="btn btn-primary">Play</button>
     </div>
     <hr/>
     <div class="board"></div>
@@ -47,6 +53,7 @@
   $(function() {
     var index;
     var path = [];
+    var interval;
 
     function drawBoard() {
       var board = $('.board').empty();
@@ -63,6 +70,20 @@
         board.append(row);
       }
     }
+
+    function selectPos() {
+      if (!$('#init').is(":visible")) return;
+      var x = $(this).attr('x');
+      var y = $(this).attr('y');
+      $.getJSON('/api/tour/8x8/'+x+','+y, load);
+    }
+
+    function reset() {
+      clearBoard();
+      $('body').attr('state', 'init');
+    }
+
+
     function clearBoard() { $('.cell').empty(); }
     function getCell(pos) {
       return $('.cell[x='+pos[0]+'][y='+pos[1]+']');
@@ -81,12 +102,12 @@
       var current = $.map(path, function(p,i) {
         return '<span class="'+posClass(i)+'">'+p+'</span>';
       }, path).join(' -> ');
-      console.log(current);
       $('#current').html(current);
     }
 
-    function load() {
-      path = JSON.parse($('#path').val().replace(/\(/g,'[').replace(/\)/g,']')).reverse();
+    function load(tour) {
+      $('body').attr('state', 'path');
+      path = tour.reverse();
       clearBoard();
       index = -1;
       next();
@@ -99,18 +120,33 @@
       updateCurrent()
     }
     function next() {
-      if (index+1 == path.length) return;
+      if (index+1 == path.length) return false;
       if (index >= 0) getCell(path[index]).removeClass('current');
       ++index;
       drawKnight(path[index]).addClass('current');
-      updateCurrent()
+      updateCurrent();
+      return true;
+    }
+    function play() {
+      if (interval) {
+        clearInterval(interval);
+        interval = null;
+        $('#play').text("Play");
+        return;
+      }
+      interval = setInterval(function() {
+        if (!next()) play();
+      }, 400);
+      $('#play').text("Pause");
     }
 
-    $('#load').click(load);
+    $('#reset').click(reset);
     $('#prev').click(prev);
     $('#next').click(next);
+    $('#play').click(play);
 
     drawBoard();
+    $('.cell').click(selectPos);
   });
   </script>
   </body>
