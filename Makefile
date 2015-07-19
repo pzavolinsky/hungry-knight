@@ -1,4 +1,4 @@
-.PHONY: run clean
+.PHONY: run clean test tour
 
 SRC := $(wildcard api/src/*.hs) \
        $(wildcard core/*.hs)
@@ -12,6 +12,11 @@ run: $(SNAP)
 $(SNAP): $(SRC) api/snap.cabal
 	(cd api; cabal configure; cabal build;)
 
-
 clean:
 	rm -rf api/dist $(OBJ)
+
+test:
+	(cd core; ghc --make test;)
+
+tour:
+	(cd core; ghc --make tour;)

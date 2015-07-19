@@ -1,5 +1,6 @@
 module Knight where
 import System.Random
+import Control.Monad.Random
 
 type Pos = (Int, Int)
 delta :: [Pos]
@@ -33,22 +34,29 @@ positionList l (i:is) = case (nextPosition i l) of
   -- using maybe l (flip positionList is) (nextPosition i l)
   -- although point free-er is not more readable
 
-randomPos :: StdGen -> (Pos, StdGen)
-randomPos xgen = ((x,y),zgen)
-  where (x, ygen) = randomR (1,8) xgen
-        (y, zgen) = randomR (1,8) ygen
+randomPos :: (RandomGen g) => Rand g Pos
+randomPos = do
+  x <- getRandomR (1,8)
+  y <- getRandomR (1,8)
+  return (x,y)
 
-randomRn :: (Int, Int) -> Int -> StdGen -> ([Int], StdGen)
-randomRn _ 0 gen = ([], gen)
-randomRn range count gen = (r:rs, rsgen)
-  where (r, rgen) = randomR range gen
-        (rs, rsgen) = randomRn range (count-1) rgen
+randomRn :: (RandomGen g) => (Int, Int) -> Int -> Rand g [Int]
+randomRn _ 0 = return []
+randomRn range count = do
+  x <- getRandomR range
+  xs <- randomRn range (count-1)
+  return (x:xs)
 
-randomList :: IO ([Pos])
-randomList = do
-  countGen <- getStdGen
-  let (count, posGen) = randomR (10,20) countGen
-  let (pos, indexGen) = randomPos posGen
-  let (indices, newGen) = randomRn (0,7) count indexGen
-  setStdGen newGen
+randomBoard :: (RandomGen g) => Rand g [Pos]
+randomBoard = do
+  count <- getRandomR (10,20)
+  pos <- randomPos
+  indices <- randomRn (0,7) count
   return $ positionList [pos] indices
+
+randomBoardIO :: IO ([Pos])
+randomBoardIO = do
+  gen <- getStdGen
+  let (board, newGen) = runRand randomBoard gen
+  setStdGen newGen
+  return board

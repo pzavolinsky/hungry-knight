@@ -28,5 +28,5 @@ listToJson c = c
 chessHandler :: Snap ()
 chessHandler = do
     modifyResponse $ setHeader "Content-Type" "application/json"
-    l <- liftIO $ randomList
+    l <- liftIO $ randomBoardIO
     writeBS $ fromString $ fmap listToJson (show l)

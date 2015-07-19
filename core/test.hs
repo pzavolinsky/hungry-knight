@@ -1,5 +1,5 @@
-import Chess
+import Knight
 
 main = do
-  l <- randomList
+  l <- randomBoardIO
   putStrLn $ show $ l
